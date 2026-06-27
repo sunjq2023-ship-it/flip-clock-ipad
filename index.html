@@ -440,9 +440,23 @@ html, body {
     "use strict";
 
     // ===== 配置 =====
-    var WEATHER_API_URL = "https://api.open-meteo.com/v1/forecast?latitude=31.23&longitude=121.47&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m&timezone=Asia/Shanghai";
-    var WEATHER_UPDATE_INTERVAL = 30 * 60 * 1000; // 30 分钟
+    // 天气数据来源：
+    // 1. 优先加载本地 weather.json（由 GitHub Actions 每30分钟更新，同源无 SSL 问题）
+    // 2. 如果本地文件不存在或过期，尝试外部 API（iOS 9 可能因 SSL 证书失败）
+    var LOCAL_WEATHER_URL = "weather.json";
+    var WEATHER_SOURCES = [
+        {
+            url: "https://api.open-meteo.com/v1/forecast?latitude=31.23&longitude=121.47&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m&timezone=Asia/Shanghai",
+            type: "open-meteo"
+        },
+        {
+            url: "https://wttr.in/Shanghai?format=j1",
+            type: "wttr"
+        }
+    ];
+    var WEATHER_UPDATE_INTERVAL = 5 * 60 * 1000; // 5 分钟检查一次本地天气文件
     var FLIP_DURATION = 300; // 翻页动画时长（毫秒）
+    var MAX_WEATHER_AGE = 2 * 60 * 60 * 1000; // 本地天气数据最大有效期：2小时
 
     // ===== WMO 天气代码映射 =====
     var WMO_CODES = {
@@ -597,40 +611,103 @@ html, body {
     var weatherDesc = document.getElementById("weather-desc");
     var weatherExtra = document.getElementById("weather-extra");
 
+    // 获取天气：优先本地文件，其次外部 API
     function fetchWeather() {
         weatherEl.className = "loading";
+        fetchLocalWeather();
+    }
 
+    // 第一步：尝试加载本地 weather.json（同源，无 SSL 问题）
+    function fetchLocalWeather() {
         var xhr = new XMLHttpRequest();
-        xhr.open("GET", WEATHER_API_URL, true);
-        xhr.timeout = 15000;
+        // 加时间戳防止缓存
+        var url = LOCAL_WEATHER_URL + "?t=" + Date.now();
+        xhr.open("GET", url, true);
+        xhr.timeout = 8000;
 
         xhr.onreadystatechange = function() {
             if (xhr.readyState !== 4) return;
 
-            if (xhr.status === 200) {
+            if (xhr.status === 200 && xhr.responseText) {
                 try {
                     var data = JSON.parse(xhr.responseText);
-                    displayWeather(data);
+                    // 检查数据是否过期
+                    var dataTime = data.timestamp || 0;
+                    var age = Date.now() - dataTime;
+                    if (age < MAX_WEATHER_AGE) {
+                        displayWeatherOpenMeteo(data);
+                        return;
+                    }
                 } catch (e) {
-                    showWeatherError();
+                    // 解析失败，尝试外部 API
                 }
-            } else {
-                showWeatherError();
             }
+            // 本地文件不可用，尝试外部 API
+            tryFetchExternal(0);
         };
 
         xhr.ontimeout = function() {
-            showWeatherError();
+            tryFetchExternal(0);
         };
 
         xhr.onerror = function() {
-            showWeatherError();
+            tryFetchExternal(0);
         };
 
-        xhr.send();
+        try {
+            xhr.send();
+        } catch (e) {
+            tryFetchExternal(0);
+        }
     }
 
-    function displayWeather(data) {
+    // 第二步：尝试外部 API（iOS 9 可能因 SSL 证书失败）
+    function tryFetchExternal(sourceIndex) {
+        if (sourceIndex >= WEATHER_SOURCES.length) {
+            showWeatherError();
+            return;
+        }
+
+        var source = WEATHER_SOURCES[sourceIndex];
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", source.url, true);
+        xhr.timeout = 10000;
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== 4) return;
+
+            if (xhr.status === 200 && xhr.responseText) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    if (source.type === "open-meteo") {
+                        displayWeatherOpenMeteo(data);
+                    } else {
+                        displayWeatherWttr(data);
+                    }
+                    return;
+                } catch (e) {
+                }
+            }
+            tryFetchExternal(sourceIndex + 1);
+        };
+
+        xhr.ontimeout = function() {
+            tryFetchExternal(sourceIndex + 1);
+        };
+
+        xhr.onerror = function() {
+            tryFetchExternal(sourceIndex + 1);
+        };
+
+        try {
+            xhr.send();
+        } catch (e) {
+            tryFetchExternal(sourceIndex + 1);
+        }
+    }
+
+    // 显示 Open-Meteo 格式的天气
+    function displayWeatherOpenMeteo(data) {
         var current = data.current;
         if (!current) {
             showWeatherError();
@@ -658,17 +735,66 @@ html, body {
             windDir + " " + windSpeed + "km/h";
     }
 
+    // 显示 wttr.in 格式的天气
+    function displayWeatherWttr(data) {
+        var current = data.current_condition;
+        if (!current || !current[0]) {
+            showWeatherError();
+            return;
+        }
+
+        var c = current[0];
+        var temp = parseInt(c.temp_C, 10) || 0;
+        var feelsLike = parseInt(c.FeelsLikeC, 10) || temp;
+        var humidity = parseInt(c.humidity, 10) || 0;
+        var windSpeed = parseInt(c.windspeedKmph, 10) || 0;
+        var windDirDeg = parseInt(c.winddirDegree, 10) || 0;
+        var windDir = windDirToText(windDirDeg);
+
+        // wttr.in 的 weatherDesc 直接是英文描述，映射为中文
+        var descEn = "";
+        if (c.weatherDesc && c.weatherDesc[0]) {
+            descEn = c.weatherDesc[0].value || "";
+        }
+        var wmo = wttrToWmo(descEn, temp);
+
+        weatherEl.className = "";
+        weatherIcon.textContent = wmo.icon;
+        weatherTemp.textContent = temp + "°";
+        weatherDesc.textContent = wmo.desc;
+        weatherExtra.innerHTML =
+            "体感 " + feelsLike + "°" +
+            '<span class="weather-sep">|</span>' +
+            "湿度 " + humidity + "%" +
+            '<span class="weather-sep">|</span>' +
+            windDir + " " + windSpeed + "km/h";
+    }
+
+    // wttr.in 英文天气描述转中文
+    function wttrToWmo(desc, temp) {
+        var d = desc.toLowerCase();
+        if (d.indexOf("sunny") >= 0 || d.indexOf("clear") >= 0) return { desc: "晴", icon: "☀️" };
+        if (d.indexOf("partly") >= 0) return { desc: "晴间多云", icon: "🌤️" };
+        if (d.indexOf("cloud") >= 0 || d.indexOf("overcast") >= 0) return { desc: "阴", icon: "☁️" };
+        if (d.indexOf("mist") >= 0 || d.indexOf("fog") >= 0 || d.indexOf("haze") >= 0) return { desc: "雾", icon: "🌫️" };
+        if (d.indexOf("rain") >= 0) return { desc: "雨", icon: "🌧️" };
+        if (d.indexOf("drizzle") >= 0) return { desc: "毛毛雨", icon: "🌦️" };
+        if (d.indexOf("snow") >= 0) return { desc: "雪", icon: "🌨️" };
+        if (d.indexOf("thunder") >= 0 || d.indexOf("storm") >= 0) return { desc: "雷暴", icon: "⛈️" };
+        return { desc: desc, icon: "🌡️" };
+    }
+
     function showWeatherError() {
         weatherEl.className = "error";
         weatherIcon.textContent = "";
         weatherTemp.textContent = "";
-        weatherDesc.textContent = "天气获取失败，稍后重试";
+        weatherDesc.textContent = "天气暂时不可用";
         weatherExtra.textContent = "";
 
-        // 5 秒后重试
+        // 60 秒后重试
         setTimeout(function() {
             fetchWeather();
-        }, 5000);
+        }, 60000);
     }
 
     // ===== 启动 =====
