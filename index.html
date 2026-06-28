@@ -484,9 +484,10 @@ html, body {
             type: "wttr"
         }
     ];
-    var WEATHER_UPDATE_INTERVAL = 5 * 60 * 1000;
-    var FLIP_DURATION = 300;
-    var MAX_WEATHER_AGE = 2 * 60 * 60 * 1000;
+    var WEATHER_UPDATE_INTERVAL = 5 * 60 * 1000; // 5 分钟检查一次本地天气文件
+    var FLIP_DURATION = 300; // 翻页动画时长（毫秒）
+    var MAX_WEATHER_AGE = 2 * 60 * 60 * 1000; // 数据新鲜期：2小时内显示"新鲜"
+    var MAX_WEATHER_DISPLAY_AGE = 24 * 60 * 60 * 1000; // 超过2小时但24小时内仍显示（标记为可能过时）
 
     // ===== WMO 天气代码映射 =====
     var WMO_CODES = {
@@ -623,6 +624,7 @@ html, body {
     var weatherTemp = document.getElementById("weather-temp");
     var weatherDesc = document.getElementById("weather-desc");
     var weatherExtra = document.getElementById("weather-extra");
+    var weatherHasData = false; // 是否已有天气数据在显示
 
     function fetchWeather() {
         weatherEl.className = "loading";
@@ -644,12 +646,21 @@ html, body {
                     var dataTime = data.timestamp || 0;
                     var age = Date.now() - dataTime;
                     if (age < MAX_WEATHER_AGE) {
+                        // 数据新鲜，直接显示
                         displayWeatherOpenMeteo(data);
                         return;
+                    } else if (age < MAX_WEATHER_DISPLAY_AGE) {
+                        // 数据过期但仍在可接受范围（24小时内），仍然显示
+                        // 同时静默尝试外部 API 更新
+                        displayWeatherOpenMeteo(data);
+                        tryFetchExternal(0);
+                        return;
                     }
+                    // 超过24小时，数据太旧，尝试外部 API
                 } catch (e) {
                 }
             }
+            // 本地文件不可用，尝试外部 API
             tryFetchExternal(0);
         };
 
@@ -729,6 +740,7 @@ html, body {
         var windDir = windDirToText(current.wind_direction_10m);
 
         weatherEl.className = "";
+        weatherHasData = true;
         weatherIcon.textContent = wmo.icon;
         weatherTemp.textContent = temp + "°";
         weatherDesc.textContent = wmo.desc;
@@ -740,6 +752,7 @@ html, body {
             windDir + " " + windSpeed + "km/h";
     }
 
+    // 显示 wttr.in 格式的天气
     function displayWeatherWttr(data) {
         var current = data.current_condition;
         if (!current || !current[0]) {
@@ -762,6 +775,7 @@ html, body {
         var wmo = wttrToWmo(descEn, temp);
 
         weatherEl.className = "";
+        weatherHasData = true;
         weatherIcon.textContent = wmo.icon;
         weatherTemp.textContent = temp + "°";
         weatherDesc.textContent = wmo.desc;
@@ -787,6 +801,12 @@ html, body {
     }
 
     function showWeatherError() {
+        // 如果已有天气数据在显示，保持不变，不报错
+        if (weatherHasData) {
+            weatherEl.className = "";
+            return;
+        }
+
         weatherEl.className = "error";
 
         setTimeout(function() {
