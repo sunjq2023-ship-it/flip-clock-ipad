@@ -22,6 +22,9 @@ html, body {
     height: 100%;
     overflow: hidden;
     background: #000;
+    /* 径向渐变背景：中心微亮，边缘纯黑，增加空间纵深感 */
+    background: -webkit-radial-gradient(center, ellipse, #1a1a1a 0%, #0a0a0a 50%, #000 100%);
+    background: radial-gradient(ellipse at center, #1a1a1a 0%, #0a0a0a 50%, #000 100%);
     font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -72,39 +75,49 @@ html, body {
     perspective: 600px;
 }
 
-/* 静态卡片（上下两半） */
+/* 静态卡片（上下两半） - 增强材质质感 */
 .card {
     position: absolute;
     left: 0;
     width: 100%;
     height: 50%;
     overflow: hidden;
+    /* 更丰富的渐变：顶部高光 -> 中间 -> 底部暗 */
     background: #1a1a1a;
-    background: -webkit-gradient(linear, left top, left bottom, from(#222), to(#1a1a1a));
-    background: -webkit-linear-gradient(top, #222, #1a1a1a);
-    background: linear-gradient(to bottom, #222, #1a1a1a);
-    -webkit-box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
-    box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+    background: -webkit-gradient(linear, left top, left bottom, from(#2a2a2a), to(#1a1a1a));
+    background: -webkit-linear-gradient(top, #2a2a2a 0%, #222 40%, #1a1a1a 100%);
+    background: linear-gradient(to bottom, #2a2a2a 0%, #222 40%, #1a1a1a 100%);
+    -webkit-box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -2px 8px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -2px 8px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4);
 }
 
+/* 上半卡片：底部加翻轴暗线 */
 .card.top {
     top: 0;
-    -webkit-border-top-left-radius: 12px;
-    -webkit-border-top-right-radius: 12px;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-    border-bottom: 1px solid #000;
+    -webkit-border-top-left-radius: 14px;
+    -webkit-border-top-right-radius: 14px;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    /* 关键：中间分缝效果 - 底部暗线模拟翻轴缝隙 */
+    border-bottom: 2px solid #000;
+    -webkit-box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -4px 12px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -4px 12px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.4);
 }
 
+/* 下半卡片：顶部加翻轴暗线 */
 .card.bottom {
     bottom: 0;
-    -webkit-border-bottom-left-radius: 12px;
-    -webkit-border-bottom-right-radius: 12px;
-    border-bottom-left-radius: 12px;
-    border-bottom-right-radius: 12px;
+    -webkit-border-bottom-left-radius: 14px;
+    -webkit-border-bottom-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    /* 关键：中间分缝效果 - 顶部暗线模拟翻轴缝隙 */
+    border-top: 2px solid #000;
+    -webkit-box-shadow: inset 0 -1px 0 rgba(255,255,255,0.05), inset 0 4px 12px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.4);
+    box-shadow: inset 0 -1px 0 rgba(255,255,255,0.05), inset 0 4px 12px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.4);
 }
 
-/* 数字文本定位 */
+/* 数字文本定位 - 暖白色 */
 .card .flip-text {
     position: absolute;
     left: 0;
@@ -112,8 +125,8 @@ html, body {
     height: 225px;
     line-height: 225px;
     text-align: center;
-    color: #f0f0f0;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    color: #f5f0e8; /* 暖白色，更有温度 */
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 0 1px rgba(255,255,255,0.1);
 }
 
 .card.top .flip-text {
@@ -124,7 +137,7 @@ html, body {
     top: -112px;
 }
 
-/* ===== 翻转动画卡片 ===== */
+/* ===== 翻转动画卡片 - 同样增强质感 ===== */
 .flip {
     position: absolute;
     left: 0;
@@ -132,11 +145,11 @@ html, body {
     height: 50%;
     overflow: hidden;
     background: #1a1a1a;
-    background: -webkit-gradient(linear, left top, left bottom, from(#222), to(#1a1a1a));
-    background: -webkit-linear-gradient(top, #222, #1a1a1a);
-    background: linear-gradient(to bottom, #222, #1a1a1a);
-    -webkit-box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
-    box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+    background: -webkit-gradient(linear, left top, left bottom, from(#2a2a2a), to(#1a1a1a));
+    background: -webkit-linear-gradient(top, #2a2a2a 0%, #222 40%, #1a1a1a 100%);
+    background: linear-gradient(to bottom, #2a2a2a 0%, #222 40%, #1a1a1a 100%);
+    -webkit-box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -2px 8px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -2px 8px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     display: none;
@@ -150,18 +163,18 @@ html, body {
     height: 225px;
     line-height: 225px;
     text-align: center;
-    color: #f0f0f0;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    color: #f5f0e8;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 0 1px rgba(255,255,255,0.1);
 }
 
-/* 上半翻转（旧数字上半部分，向下翻） */
+/* 上半翻转 */
 .flip.top-flip {
     top: 0;
-    -webkit-border-top-left-radius: 12px;
-    -webkit-border-top-right-radius: 12px;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-    border-bottom: 1px solid #000;
+    -webkit-border-top-left-radius: 14px;
+    -webkit-border-top-right-radius: 14px;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom: 2px solid #000;
     -webkit-transform-origin: bottom;
     transform-origin: bottom;
     -webkit-transform: rotateX(0deg);
@@ -188,13 +201,14 @@ html, body {
     100% { transform: rotateX(-90deg); }
 }
 
-/* 下半翻转（新数字下半部分，向上翻） */
+/* 下半翻转 */
 .flip.bottom-flip {
     bottom: 0;
-    -webkit-border-bottom-left-radius: 12px;
-    -webkit-border-bottom-right-radius: 12px;
-    border-bottom-left-radius: 12px;
-    border-bottom-right-radius: 12px;
+    -webkit-border-bottom-left-radius: 14px;
+    -webkit-border-bottom-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    border-top: 2px solid #000;
     -webkit-transform-origin: top;
     transform-origin: top;
     -webkit-transform: rotateX(90deg);
@@ -225,22 +239,22 @@ html, body {
 .colon {
     font-size: 150px;
     font-weight: bold;
-    color: #f0f0f0;
+    color: #f5f0e8;
     line-height: 225px;
     padding: 0 12px;
     -webkit-animation: blink 2s ease-in-out infinite;
     animation: blink 2s ease-in-out infinite;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
 @-webkit-keyframes blink {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
+    50% { opacity: 0.25; }
 }
 
 @keyframes blink {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
+    50% { opacity: 0.25; }
 }
 
 /* ===== 日期 ===== */
@@ -250,19 +264,22 @@ html, body {
     color: #888;
     text-align: center;
     letter-spacing: 3px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 /* ===== 天气区域 ===== */
 #weather {
     margin-top: 35px;
     display: -webkit-box;
-    -webkit-box-orient: horizontal;
+    -webkit-box-orient: vertical;
     -webkit-box-pack: center;
     -webkit-box-align: center;
     display: -webkit-flex;
+    -webkit-flex-direction: column;
     -webkit-justify-content: center;
     -webkit-align-items: center;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     min-height: 80px;
@@ -272,9 +289,31 @@ html, body {
     opacity: 0.5;
 }
 
-#weather.error #weather-content {
+#weather.error #weather-main,
+#weather.error #weather-details {
+    display: none;
+}
+
+#weather.error #weather-error-text {
+    display: block;
+}
+
+#weather-error-text {
+    display: none;
     color: #666;
     font-size: 24px;
+}
+
+/* 天气主信息行：图标 + 温度 + 描述 */
+#weather-main {
+    display: -webkit-box;
+    -webkit-box-orient: horizontal;
+    -webkit-box-align: center;
+    display: -webkit-flex;
+    -webkit-align-items: center;
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
 }
 
 #weather-icon {
@@ -283,50 +322,43 @@ html, body {
     line-height: 1;
 }
 
-#weather-content {
-    display: -webkit-box;
-    -webkit-box-orient: horizontal;
-    -webkit-box-align: center;
-    display: -webkit-flex;
-    -webkit-align-items: center;
-    display: flex;
-    align-items: center;
-    color: #ccc;
-}
-
 #weather-temp {
     font-size: 54px;
     font-weight: 300;
-    color: #f0f0f0;
+    color: #f5f0e8;
     margin-right: 22px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 #weather-desc {
     font-size: 30px;
-    color: #aaa;
-    margin-right: 22px;
+    color: #bbb;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
-#weather-extra {
-    font-size: 24px;
-    color: #777;
+/* 天气次信息行：体感/湿度/风 */
+#weather-details {
+    display: -webkit-box;
+    -webkit-box-orient: horizontal;
+    -webkit-box-align: center;
+    -webkit-box-pack: center;
+    display: -webkit-flex;
+    -webkit-align-items: center;
+    -webkit-justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #666;
+    letter-spacing: 1px;
 }
 
 .weather-sep {
-    color: #444;
+    color: #333;
     margin: 0 14px;
 }
 
-/* ===== 提示文字 ===== */
-#hint {
-    position: fixed;
-    bottom: 20px;
-    left: 0;
-    width: 100%;
-    text-align: center;
-    font-size: 18px;
-    color: #333;
-}
+
 
 /* ===== 响应式适配 ===== */
 @media screen and (max-width: 768px) {
@@ -365,8 +397,8 @@ html, body {
     #weather-desc {
         font-size: 24px;
     }
-    #weather-extra {
-        font-size: 21px;
+    #weather-details {
+        font-size: 18px;
     }
 }
 
@@ -406,8 +438,8 @@ html, body {
     #weather-desc {
         font-size: 20px;
     }
-    #weather-extra {
-        font-size: 17px;
+    #weather-details {
+        font-size: 15px;
     }
 }
 </style>
@@ -424,16 +456,17 @@ html, body {
     </div>
     <div id="date"></div>
     <div id="weather">
-        <div id="weather-icon"></div>
-        <div id="weather-content">
+        <div id="weather-main">
+            <div id="weather-icon"></div>
             <span id="weather-temp"></span>
             <span id="weather-desc"></span>
+        </div>
+        <div id="weather-details">
             <span id="weather-extra"></span>
         </div>
+        <span id="weather-error-text">天气暂时不可用</span>
     </div>
 </div>
-
-<div id="hint">添加到主屏幕以全屏显示 · 建议关闭自动锁定</div>
 
 <script>
 (function() {
@@ -755,10 +788,6 @@ html, body {
 
     function showWeatherError() {
         weatherEl.className = "error";
-        weatherIcon.textContent = "";
-        weatherTemp.textContent = "";
-        weatherDesc.textContent = "天气暂时不可用";
-        weatherExtra.textContent = "";
 
         setTimeout(function() {
             fetchWeather();
