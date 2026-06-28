@@ -8,6 +8,15 @@
 <meta name="format-detection" content="telephone=no">
 <title>翻页时钟</title>
 <style>
+/* ===== 自定义书法字体（子集化，同源加载） ===== */
+@font-face {
+    font-family: 'MaShanZheng';
+    src: url('ma-shan-zheng.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* ===== 全局重置 ===== */
 * {
     margin: 0;
@@ -340,11 +349,12 @@ html, body {
 /* ===== 每日一句 ===== */
 #quote {
     margin-top: 25px;
-    font-family: "Kaiti SC", "STKaiti", "KaiTi", "楷体", serif;
+    /* 优先：马善政毛笔楷书（同源Web Font）→ 宋体（iOS自带）→ 仿宋 → 通用衬线 */
+    font-family: "MaShanZheng", "Songti SC", "STSong", "STFangsong", "FangSong", "STKaiti", "Kaiti SC", serif;
     font-size: 28px;
     color: #c9a86a;
     text-align: center;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     max-width: 90%;
     text-shadow: 0 0 8px rgba(201,168,106,0.3), 0 1px 2px rgba(0,0,0,0.5);
     line-height: 1.6;
